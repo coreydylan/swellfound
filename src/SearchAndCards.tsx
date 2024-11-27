@@ -6,25 +6,21 @@ import nlp from 'compromise';
 
 interface AirtableRecord {
   id: string;
-  Title?: string;
-  Quicktake?: string;
-  Details?: string;
-  Price?: number;
-  ImageURL?: string;
-  Type?: string;
+  Title?: string | number | boolean | null;
+  Quicktake?: string | number | boolean | null;
+  Details?: string | number | boolean | null;
+  Price?: string | number | boolean | null;
+  ImageURL?: string | null;
+  Type?: string | number | boolean | null;
 }
 
-// Component to handle the animated S logo
 const AnimatedSLogo: React.FC<{ showLogo: boolean }> = ({ showLogo }) => {
   if (!showLogo) return null;
 
   return createPortal(
     <div
       className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50"
-      style={{
-        width: '96px',
-        height: '96px',
-      }}
+      style={{ width: '96px', height: '96px' }}
     >
       <img
         src="/slogo.svg"
@@ -32,13 +28,13 @@ const AnimatedSLogo: React.FC<{ showLogo: boolean }> = ({ showLogo }) => {
         className="w-full h-full animate-gradient-slow"
       />
     </div>,
-    document.body // Render outside the main DOM tree
+    document.body
   );
 };
 
 const SearchAndCards: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null); // Keep track of the selected card's ID
+  const [selectedItem, setSelectedItem] = useState<AirtableRecord | null>(null);
   const [recommendations, setRecommendations] = useState<AirtableRecord[]>([]);
   const [filteredRecs, setFilteredRecs] = useState<AirtableRecord[]>([]);
   const [showLogo, setShowLogo] = useState(true);
@@ -46,7 +42,7 @@ const SearchAndCards: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const data = await fetchAirtableData();
+        const data: AirtableRecord[] = await fetchAirtableData();
         setRecommendations(data);
         setFilteredRecs(data);
       } catch (error) {
@@ -70,7 +66,7 @@ const SearchAndCards: React.FC = () => {
 
     const filtered = recommendations.filter((rec) => {
       const combinedFields = `${rec.Title || ''} ${rec.Quicktake || ''} ${rec.Details || ''} ${rec.Type || ''}`.toLowerCase();
-      return queryTerms.some((term) => combinedFields.includes(term));
+      return queryTerms.some((term: string) => combinedFields.includes(term));
     });
 
     setFilteredRecs(filtered);
@@ -78,7 +74,7 @@ const SearchAndCards: React.FC = () => {
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
-    setShowLogo(query.trim() === ''); // Hide logo when typing
+    setShowLogo(query.trim() === '');
   };
 
   useEffect(() => {
@@ -88,14 +84,8 @@ const SearchAndCards: React.FC = () => {
   return (
     <div className="min-h-screen bg-primary text-secondary p-6 main-container pt-[5%] relative">
       <div className="max-w-2xl mx-auto text-center">
-        {/* Top Logo */}
-        <img
-          src="/wordmark.svg"
-          alt="SwellFound Logo"
-          className="mx-auto mb-8 h-24"
-        />
+        <img src="/wordmark.svg" alt="SwellFound Logo" className="mx-auto mb-8 h-24" />
 
-        {/* Search Bar */}
         <div className="relative w-full mb-6">
           <input
             type="text"
@@ -120,61 +110,43 @@ const SearchAndCards: React.FC = () => {
           </div>
         </div>
 
-        {/* Render the animated S logo */}
         <AnimatedSLogo showLogo={showLogo} />
 
-        {/* Results Area */}
         <div
           className={`grid grid-cols-1 gap-4 transition-opacity duration-500 ${
             searchQuery.length > 0 ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
           }`}
         >
           {filteredRecs.length > 0 ? (
-            filteredRecs.map((rec) => (
+            filteredRecs.map((rec, index) => (
               <div
                 key={rec.id}
-                className="relative p-4 border border-secondary rounded-lg shadow hover:shadow-lg transition-all bg-secondary text-primary cursor-pointer"
-                onClick={() =>
-                  setSelectedItemId(selectedItemId === rec.id ? null : rec.id)
-                }
+                className="relative p-4 border border-secondary rounded-lg shadow hover:shadow-lg transition-all bg-secondary text-primary cursor-pointer transform transition duration-700"
+                onClick={() => setSelectedItem(selectedItem?.id === rec.id ? null : rec)}
               >
-                {/* Type Bubble */}
                 {rec.Type && (
                   <div
                     className="absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-medium"
-                    style={{
-                      backgroundColor: '#034641',
-                      color: '#dcf0fa',
-                    }}
+                    style={{ backgroundColor: '#034641', color: '#dcf0fa' }}
                   >
                     {rec.Type}
                   </div>
                 )}
-
-                {/* Image and Title */}
                 <div className="flex">
                   {rec.ImageURL && (
                     <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center rounded-md mr-4">
                       <img
-                        src={rec.ImageURL}
-                        alt={rec.Title || 'Untitled'}
+                        src={rec.ImageURL.toString()}
+                        alt={rec.Title?.toString() || 'Untitled'}
                         className="w-20 h-20 object-cover"
                       />
                     </div>
                   )}
                   <div className="flex-grow text-left">
-                    <h2 className="text-lg font-bold">{rec.Title || 'Untitled'}</h2>
-                    <p className="text-sm text-gray-2">{rec.Quicktake || 'No quick take available.'}</p>
+                    <h2 className="text-lg font-bold">{rec.Title?.toString() || 'Untitled'}</h2>
+                    <p className="text-sm text-gray-2">{rec.Quicktake?.toString() || 'No quick take available.'}</p>
                   </div>
                 </div>
-
-                {/* Expanded Details */}
-                {selectedItemId === rec.id && (
-                  <div className="mt-4 text-left">
-                    <p className="text-sm text-gray-3">{rec.Details || 'No details available.'}</p>
-                    {rec.Price && <p className="font-semibold">Price: ${rec.Price}</p>}
-                  </div>
-                )}
               </div>
             ))
           ) : (
