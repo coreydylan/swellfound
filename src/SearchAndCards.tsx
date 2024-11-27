@@ -1,55 +1,94 @@
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { fetchAirtableData } from './airtable';
+import React, { useState, useEffect, useRef } from 'react';
 import { debounce } from 'lodash';
 import nlp from 'compromise';
+import WelcomeCards from './WelcomeCards';
+import { fetchAirtableData } from './airtable';
 
 // Define AirtableRecord interface
 interface AirtableRecord {
   id: string;
-  Title: string; // Always a string after normalization
+  Title: string;
+  Standard: string;
+  Type_Text: string;
   Quicktake: string;
   Details: string;
-  Price: number; // Converted to string
+  Price: number;
   ImageURL: string;
-  Type: string; // Always a string, even for arrays
+  BuyURL: string;
+  SustainabilityNotes: string;
 }
 
-// Component to handle the animated S logo
-const AnimatedSLogo: React.FC<{ showLogo: boolean }> = ({ showLogo }) => {
-  if (!showLogo) return null;
-
-  return createPortal(
+// Standard Card Component
+const StandardCard: React.FC<{
+  record: AirtableRecord;
+  isExpanded: boolean;
+  onToggle: () => void;
+}> = ({ record, isExpanded, onToggle }) => (
+  <div
+    className="relative p-6 cursor-pointer hover:shadow-lg transition-all duration-200 rounded-lg border border-secondary bg-secondary"
+    onClick={onToggle}
+  >
+    {/* Type Tag */}
     <div
-      className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50"
+      className="absolute top-3 right-3 px-3 py-1 text-sm font-semibold"
       style={{
-        width: '96px',
-        height: '96px',
+        backgroundColor: '#034641',
+        color: '#dcf0fa',
+        letterSpacing: '0.05em',
+        borderRadius: '9999px',
       }}
     >
-      <img
-        src="/slogo.svg"
-        alt="SwellFound S Logo"
-        className="w-full h-full animate-gradient-slow"
-      />
-    </div>,
-    document.body
-  );
-};
+      {record.Type_Text}
+    </div>
+
+    {/* Main Content */}
+    <div className="flex gap-6">
+      {record.ImageURL && (
+        <div className="flex-shrink-0 w-32 h-32">
+          <img
+            src={record.ImageURL}
+            alt={record.Title}
+            className="w-full h-full object-cover rounded-lg"
+          />
+        </div>
+      )}
+      <div className="flex-grow text-left">
+        <h3 className="text-sm mb-1 font-medium" style={{ color: '#367974' }}>
+          {record.Title}
+        </h3>
+        <h2 className="text-xl font-bold mb-2" style={{ color: '#034641' }}>
+          {record.Standard}
+        </h2>
+        <p className="text-sm" style={{ color: '#1c5f5a' }}>
+          {record.Quicktake}
+        </p>
+      </div>
+    </div>
+
+    {/* Expanded Content */}
+    {isExpanded && (
+      <div className="mt-6 pt-6 border-t" style={{ borderColor: '#0abeb4' }}>
+        <p className="prose text-sm mb-6 text-left" style={{ color: '#1c5f5a' }}>
+          {record.Details}
+        </p>
+      </div>
+    )}
+  </div>
+);
 
 const SearchAndCards: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedItem, setSelectedItem] = useState<AirtableRecord | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<AirtableRecord[]>([]);
   const [filteredRecs, setFilteredRecs] = useState<AirtableRecord[]>([]);
-  const [showLogo, setShowLogo] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(true);
+  const searchBarRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const data: AirtableRecord[] = await fetchAirtableData();
         setRecommendations(data);
-        setFilteredRecs(data); // Set initial filtered records
       } catch (error) {
         console.error('Error fetching data from Airtable:', error);
       }
@@ -60,7 +99,7 @@ const SearchAndCards: React.FC = () => {
 
   const debouncedFilter = debounce((query: string) => {
     if (!query.trim()) {
-      setFilteredRecs(recommendations);
+      setFilteredRecs([]);
       return;
     }
 
@@ -70,7 +109,7 @@ const SearchAndCards: React.FC = () => {
     const queryTerms = processedQuery.split(' ');
 
     const filtered = recommendations.filter((rec) => {
-      const combinedFields = `${rec.Title || ''} ${rec.Quicktake || ''} ${rec.Details || ''} ${rec.Type || ''}`.toLowerCase();
+      const combinedFields = `${rec.Title || ''} ${rec.Quicktake || ''} ${rec.Details || ''} ${rec.Type_Text || ''}`.toLowerCase();
       return queryTerms.some((term: string) => combinedFields.includes(term));
     });
 
@@ -79,12 +118,19 @@ const SearchAndCards: React.FC = () => {
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
-    setShowLogo(query.trim() === ''); // Show logo only if search is empty
+    setShowWelcome(false);
   };
 
   useEffect(() => {
     debouncedFilter(searchQuery);
   }, [searchQuery, recommendations]);
+
+  const toggleExpand = (id: string) => {
+    setSelectedItemId((prev) => (prev === id ? null : id));
+  };
+
+  const cardWidth =
+    searchBarRef.current?.getBoundingClientRect().width || '100%';
 
   return (
     <div className="min-h-screen bg-primary text-secondary p-6 main-container pt-[5%] relative">
@@ -97,7 +143,7 @@ const SearchAndCards: React.FC = () => {
         />
 
         {/* Search Bar */}
-        <div className="relative w-full mb-6">
+        <div className="relative w-full mb-6" ref={searchBarRef}>
           <input
             type="text"
             placeholder="Search..."
@@ -105,70 +151,30 @@ const SearchAndCards: React.FC = () => {
             onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full p-4 pr-12 border border-secondary rounded-lg shadow-sm bg-secondary text-primary"
           />
-          <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-gray-500"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M12.9 14.32a8 8 0 111.414-1.414l4.387 4.387a1 1 0 11-1.414 1.414l-4.387-4.387zM8 14a6 6 0 100-12 6 6 0 000 12z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
         </div>
 
-        {/* Render the animated S logo */}
-        <AnimatedSLogo showLogo={showLogo} />
+        {/* Welcome Cards */}
+        {showWelcome && (
+          <WelcomeCards onComplete={() => setShowWelcome(false)} cardWidth={`${cardWidth}px`} />
+        )}
 
         {/* Results Area */}
-        <div
-          className={`grid grid-cols-1 gap-4 transition-opacity duration-500 ${
-            searchQuery.length > 0 ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-          }`}
-        >
-          {filteredRecs.length > 0 ? (
-            filteredRecs.map((rec, index) => (
-              <div
-                key={rec.id}
-                className="relative p-4 border border-secondary rounded-lg shadow hover:shadow-lg transition-all bg-secondary text-primary cursor-pointer transform transition duration-700"
-                onClick={() =>
-                  setSelectedItem(selectedItem?.id === rec.id ? null : rec)
-                }
-              >
-                {/* Image and Title */}
-                <div className="flex">
-                  {rec.ImageURL && (
-                    <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center rounded-md mr-4">
-                      <img
-                        src={rec.ImageURL}
-                        alt={rec.Title || 'Untitled'}
-                        className="w-20 h-20 object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="flex-grow text-left">
-                    <h2 className="text-lg font-bold">{rec.Title || 'Untitled'}</h2>
-                    <p className="text-sm text-gray-2">{rec.Quicktake || 'No quick take available.'}</p>
-                  </div>
-                </div>
-
-                {/* Expanded Details */}
-                {selectedItem?.id === rec.id && (
-                  <div className="mt-4 text-left">
-                    <p className="text-sm text-gray-3">{rec.Details || 'No details available.'}</p>
-                    <p className="font-semibold">Price: ${rec.Price || 'N/A'}</p>
-                  </div>
-                )}
-              </div>
-            ))
-          ) : (
-            <p>No results found.</p>
-          )}
-        </div>
+        {!showWelcome && (
+          <div className="grid grid-cols-1 gap-4">
+            {filteredRecs.length > 0 ? (
+              filteredRecs.map((rec) => (
+                <StandardCard
+                  key={rec.id}
+                  record={rec}
+                  isExpanded={rec.id === selectedItemId}
+                  onToggle={() => toggleExpand(rec.id)}
+                />
+              ))
+            ) : (
+              searchQuery.trim() && <p>No results found.</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -9,4 +9,11 @@ export default defineConfig({
   define: {
     'process.env': process.env,
   },
+  css: {
+    preprocessorOptions: {
+      css: {
+        additionalData: `@import "./src/index.css";`,
+      },
+    },
+  },
 });

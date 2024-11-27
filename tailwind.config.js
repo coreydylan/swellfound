@@ -12,8 +12,8 @@ export default {
         },
         secondary: {
           DEFAULT: '#dcf0fa',
-          tint1: '#ffffff',
-          tint2: '#ffffff',
+          tint1: '#f0f9ff',
+          tint2: '#e6f5fc',
           tint3: '#ffffff',
         },
         tertiary: {
@@ -28,7 +28,31 @@ export default {
           3: '#717171',
         },
       },
+      spacing: {
+        128: '32rem',
+        144: '36rem',
+      },
+      borderRadius: {
+        '4xl': '2rem',
+      },
+      animation: {
+        wiggle: 'wiggle 0.5s ease-in-out',
+        fadeIn: 'fadeIn 0.5s ease-in-out',
+      },
+      keyframes: {
+        wiggle: {
+          '0%, 100%': { transform: 'rotate(0deg)' },
+          '50%': { transform: 'rotate(-5deg)' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'), // Prose styling
+    require('@tailwindcss/forms'), // Forms styling (search bar, etc.)
+  ],
 };

@@ -13,12 +13,19 @@ export const fetchAirtableData = async () => {
     return records.map((record) => ({
       id: record.id,
       Title: typeof record.fields.Title === 'string' ? record.fields.Title : '',
+      Standard: typeof record.fields.Standard === 'string' ? record.fields.Standard : '',
+      Type_Text: typeof record.fields.Type_Text === 'string' ? record.fields.Type_Text : '',
       Quicktake: typeof record.fields.Quicktake === 'string' ? record.fields.Quicktake : '',
       Details: typeof record.fields.Details === 'string' ? record.fields.Details : '',
-      Price: typeof record.fields.Price === 'number' ? record.fields.Price : 0, // Keep as number
+      Price: typeof record.fields.Price === 'number' ? record.fields.Price : 0, // Ensure numeric type
       ImageURL: typeof record.fields.ImageURL === 'string' ? record.fields.ImageURL : '',
+      BuyURL: typeof record.fields.BuyURL === 'string' ? record.fields.BuyURL : '',
+      SustainabilityNotes:
+        typeof record.fields.SustainabilityNotes === 'string'
+          ? record.fields.SustainabilityNotes
+          : '',
       Type: Array.isArray(record.fields.Type)
-        ? record.fields.Type.join(', ') // Join arrays into a string
+        ? record.fields.Type.join(', ') // Convert array to comma-separated string
         : typeof record.fields.Type === 'string'
         ? record.fields.Type
         : '',
