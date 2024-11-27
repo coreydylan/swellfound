@@ -70,7 +70,7 @@ const SearchAndCards: React.FC = () => {
 
     const filtered = recommendations.filter((rec) => {
       const combinedFields = `${rec.Title || ''} ${rec.Quicktake || ''} ${rec.Details || ''} ${rec.Type || ''}`.toLowerCase();
-      return queryTerms.some((term) => combinedFields.includes(term));
+      return queryTerms.some((term: string) => combinedFields.includes(term));
     });
 
     setFilteredRecs(filtered);
