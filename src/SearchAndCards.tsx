@@ -142,7 +142,7 @@ const SearchAndCards: React.FC = () => {
           className="mx-auto mb-8 h-24"
         />
 
-        {/* Search Bar */}
+        {/* Search Bar with Icon */}
         <div className="relative w-full mb-6" ref={searchBarRef}>
           <input
             type="text"
@@ -151,11 +151,28 @@ const SearchAndCards: React.FC = () => {
             onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full p-4 pr-12 border border-secondary rounded-lg shadow-sm bg-secondary text-primary"
           />
+          <svg
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-primary opacity-50"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
         </div>
 
-        {/* Welcome Cards */}
-        {showWelcome && (
-          <WelcomeCards onComplete={() => setShowWelcome(false)} cardWidth={`${cardWidth}px`} />
+        {/* Welcome Cards with null check */}
+        {showWelcome && searchBarRef.current && (
+          <WelcomeCards 
+            onComplete={() => setShowWelcome(false)} 
+            cardWidth={`${searchBarRef.current.offsetWidth}px`} 
+          />
         )}
 
         {/* Results Area */}

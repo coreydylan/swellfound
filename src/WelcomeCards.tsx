@@ -17,56 +17,69 @@ const WelcomeCards: React.FC<{ onComplete: () => void; cardWidth: string }> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [maxHeight, setMaxHeight] = useState<number | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  // Calculate the maximum height of all cards
   useEffect(() => {
-    // Calculate and set the maximum height of all cards
     const heights = cardRefs.current.map((ref) => ref?.offsetHeight || 0);
-    const max = Math.max(...heights);
-    setMaxHeight(max);
-  }, []);
+    setMaxHeight(Math.max(...heights));
+  }, [cards]);
 
+  // Handle card removal logic
   const removeCard = () => {
-    setCards((prev) => prev.slice(1));
-    if (cards.length === 1) onComplete(); // Notify parent when all cards are swiped
+    setCards((prev) => {
+      const newCards = prev.slice(1);
+      if (newCards.length === 0) {
+        // Delay the onComplete call to avoid setState warnings
+        setTimeout(onComplete, 0);
+      }
+      return newCards;
+    });
   };
 
   return (
-    <div className="relative flex justify-center items-center h-[400px]">
+    <div
+      ref={containerRef}
+      className="relative flex justify-center items-center h-[400px]"
+      style={{ touchAction: 'none' }} // Prevent default touch behaviors
+    >
       <AnimatePresence>
         {cards.map((message, index) => (
           <motion.div
-            key={index}
-            ref={(el) => (cardRefs.current[index] = el)} // Attach ref to each card
-            className={`absolute p-6 bg-secondary rounded-lg shadow-lg border border-primary text-primary`}
+            key={`card-${index}`}
+            ref={(el) => (cardRefs.current[index] = el)}
+            className="absolute p-6 bg-secondary rounded-lg shadow-lg border border-primary text-primary"
             style={{
-              width: cardWidth, // Match the width of the search bar
-              height: maxHeight || 'auto', // Apply the max height if calculated
+              width: cardWidth,
+              height: maxHeight || 'auto',
               zIndex: cards.length - index,
-              top: index * 5, // Stack appearance
+              top: index * 5,
               left: index * 5,
-              pointerEvents: index === 0 ? 'auto' : 'none', // Only top card is interactive
+              pointerEvents: index === 0 ? 'auto' : 'none',
+              touchAction: 'none',
             }}
-            initial={{ scale: 1, y: 0 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ x: -1000, opacity: 0, rotate: -15 }}
-            transition={{ duration: 0.5 }}
-            drag={index === 0 ? 'x' : false} // Only top card is draggable
-            dragConstraints={{ left: -1000, right: 0 }}
-            dragElastic={0.5} // Makes the drag feel more responsive
-            onDragStart={() => {
-              if (index === 0) setIsDragging(true); // Only track dragging for top card
+            initial={{ scale: 1, x: 0 }}
+            animate={{ scale: 1, x: 0 }}
+            exit={{
+              x: -1000,
+              opacity: 0,
+              transition: { duration: 0.3, ease: 'easeOut' },
             }}
-            onDragEnd={(e, info) => {
+            drag={index === 0 ? 'x' : false}
+            dragConstraints={containerRef}
+            dragElastic={0.5}
+            onDragStart={() => setIsDragging(true)}
+            onDragEnd={(_, info) => {
               setIsDragging(false);
-              if (index === 0 && (info.offset.x < -50 || info.velocity.x < -500)) {
-                removeCard(); // Trigger removal only for the top card
+              if (Math.abs(info.offset.x) > 100 || Math.abs(info.velocity.x) > 500) {
+                removeCard();
               }
             }}
             onClick={() => {
               if (!isDragging && index === 0) removeCard();
             }}
           >
-            <p className="text-sm">{message}</p>
+            <p className="text-sm text-left">{message}</p>
             {index === 0 && (
               <motion.div
                 className="absolute bottom-4 right-4"
