@@ -71,26 +71,6 @@ const StandardCard: React.FC<{
         <p className="prose text-sm mb-6 text-left" style={{ color: '#1c5f5a' }}>
           {record.Details}
         </p>
-
-        {/* Buy Button */}
-        {(record.BuyURL || record.Price > 0) && (
-          <div className="flex gap-4 mt-4">
-            {record.BuyURL && (
-              <a
-                href={record.BuyURL}
-                className="px-4 py-2 border rounded-lg transition-colors hover:bg-teal-600 hover:text-white"
-                style={{
-                  borderColor: '#0abeb4',
-                  color: '#0abeb4',
-                }}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {record.Price > 0 ? `Buy Now - $${record.Price}` : 'Where to Buy →'}
-              </a>
-            )}
-          </div>
-        )}
       </div>
     )}
   </div>
@@ -127,6 +107,7 @@ const SearchAndCards: React.FC = () => {
       const cardsBottom = cardsRef.current.getBoundingClientRect().bottom;
       const viewportHeight = window.innerHeight;
 
+      // Adjust for mobile and desktop
       if (window.innerWidth <= 768) {
         const mobileOffset = (cardsBottom + viewportHeight) / 2 - 150;
         setLogoOffset(mobileOffset);
@@ -135,6 +116,7 @@ const SearchAndCards: React.FC = () => {
       }
     };
 
+    // Update on mount and resize
     updateLogoPosition();
     window.addEventListener('resize', updateLogoPosition);
     return () => window.removeEventListener('resize', updateLogoPosition);

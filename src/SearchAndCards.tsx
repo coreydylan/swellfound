@@ -29,17 +29,21 @@ const StandardCard: React.FC<{
     onClick={onToggle}
   >
     {/* Type Tag */}
-    <div
-      className="absolute top-3 right-3 px-3 py-1 text-sm font-semibold"
-      style={{
-        backgroundColor: '#034641',
-        color: '#dcf0fa',
-        letterSpacing: '0.05em',
-        borderRadius: '9999px',
-      }}
-    >
-      {record.Type_Text}
-    </div>
+    {record.Type_Text && (
+      <div
+        className="absolute top-3 right-3 px-4 py-2 text-xs font-semibold"
+        style={{
+          backgroundColor: '#034641',
+          color: '#dcf0fa',
+          letterSpacing: '0.05em',
+          borderRadius: '12px',
+          minWidth: '60px',
+          textAlign: 'center',
+        }}
+      >
+        {record.Type_Text}
+      </div>
+    )}
 
     {/* Main Content */}
     <div className="flex gap-6">
@@ -71,6 +75,26 @@ const StandardCard: React.FC<{
         <p className="prose text-sm mb-6 text-left" style={{ color: '#1c5f5a' }}>
           {record.Details}
         </p>
+
+        {/* Buy Button */}
+        {(record.BuyURL || record.Price > 0) && (
+          <div className="flex gap-4 mt-4">
+            {record.BuyURL && (
+              <a
+                href={record.BuyURL}
+                className="px-4 py-2 border rounded-lg transition-colors hover:bg-teal-600 hover:text-white"
+                style={{
+                  borderColor: '#0abeb4',
+                  color: '#0abeb4',
+                }}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {record.Price > 0 ? `Buy Now - $${record.Price}` : 'Where to Buy →'}
+              </a>
+            )}
+          </div>
+        )}
       </div>
     )}
   </div>
@@ -107,7 +131,6 @@ const SearchAndCards: React.FC = () => {
       const cardsBottom = cardsRef.current.getBoundingClientRect().bottom;
       const viewportHeight = window.innerHeight;
 
-      // Adjust for mobile and desktop
       if (window.innerWidth <= 768) {
         const mobileOffset = (cardsBottom + viewportHeight) / 2 - 150;
         setLogoOffset(mobileOffset);
@@ -116,7 +139,6 @@ const SearchAndCards: React.FC = () => {
       }
     };
 
-    // Update on mount and resize
     updateLogoPosition();
     window.addEventListener('resize', updateLogoPosition);
     return () => window.removeEventListener('resize', updateLogoPosition);
@@ -124,20 +146,29 @@ const SearchAndCards: React.FC = () => {
 
   const debouncedFilter = debounce((query: string) => {
     if (!query.trim()) {
-      setFilteredRecs([]);
+      setFilteredRecs([]); // Clear results if query is empty
       return;
     }
-
-    const doc = nlp(query.toLowerCase().trim());
-    const processedQuery = doc.out('text');
-
-    const queryTerms = processedQuery.split(' ');
-
+  
+    const processedQuery = query.toLowerCase().trim();
+  
+    // Combine all fields into a single searchable string
     const filtered = recommendations.filter((rec) => {
-      const combinedFields = `${rec.Title || ''} ${rec.Quicktake || ''} ${rec.Details || ''} ${rec.Type_Text || ''}`.toLowerCase();
-      return queryTerms.some((term: string) => combinedFields.includes(term));
+      const combinedFields = [
+        rec.Title,
+        rec.Quicktake,
+        rec.Details,
+        rec.Type_Text,
+        rec.Standard,
+        rec.SustainabilityNotes,
+      ]
+        .filter(Boolean) // Remove undefined or null fields
+        .join(' ') // Concatenate all fields
+        .toLowerCase(); // Normalize to lowercase
+  
+      return combinedFields.includes(processedQuery);
     });
-
+  
     setFilteredRecs(filtered);
   }, 300);
 
