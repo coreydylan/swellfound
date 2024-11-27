@@ -4,7 +4,7 @@ import { ArrowRight } from 'lucide-react';
 
 const welcomeMessages = [
   "At SwellFound, we believe life gets better when we raise our standards. We're creating a future where making good choices is simple, and quality is clear. We're just getting started, but we wanted to begin by sharing some of our Standards for living well.",
-  "For now, we're focusing on three categories: TOOLS that last generations, TECHNIQUES that become second nature, TOYS that make life richer.",
+  "For now, we're focusing on three categories: tools that last generations, techniques that become second nature, toys that make life richer.",
   "A standard might be a perfectly designed tool that lasts decades, a morning ritual that centers your day, or a technique that makes everyday moments better. Each one is chosen because it creates lasting value.",
   "Begin your search. Looking to brew better coffee? Want to organize your kitchen beautifully? Ready to master bread making? Each standard comes from years of real experience. Ready to explore?",
 ];

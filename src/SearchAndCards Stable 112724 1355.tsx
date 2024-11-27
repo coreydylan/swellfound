@@ -167,26 +167,11 @@ const SearchAndCards: React.FC = () => {
           </svg>
         </div>
 
-        {/* Animated S Logo */}
-        <div
-          className={`absolute top-[50%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-opacity duration-500 ${
-            searchQuery ? 'opacity-0 pointer-events-none' : 'opacity-100'
-          }`}
-        >
-          <div className="w-24 h-24">
-            <img
-              src="/slogo.svg"
-              alt="SwellFound S Logo"
-              className="w-full h-full animate-gradient-slow"
-            />
-          </div>
-        </div>
-
         {/* Welcome Cards with null check */}
         {showWelcome && searchBarRef.current && (
-          <WelcomeCards
-            onComplete={() => setShowWelcome(false)}
-            cardWidth={`${searchBarRef.current.offsetWidth}px`}
+          <WelcomeCards 
+            onComplete={() => setShowWelcome(false)} 
+            cardWidth={`${searchBarRef.current.offsetWidth}px`} 
           />
         )}
 
