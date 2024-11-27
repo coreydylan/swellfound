@@ -1,4 +1,4 @@
-import Airtable, { FieldSet, Records } from 'airtable';
+import Airtable from 'airtable';
 
 const AIRTABLE_BASE_ID = 'app7m4fcWo5B7gP05';
 const AIRTABLE_TABLE_NAME = 'standards';
@@ -8,26 +8,20 @@ const base = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(AIRTABLE_BASE_ID);
 
 export const fetchAirtableData = async () => {
   try {
-    const records: Records<FieldSet> = await base(AIRTABLE_TABLE_NAME)
-      .select({
-        view: 'Grid view',
-      })
-      .all();
+    const records = await base(AIRTABLE_TABLE_NAME).select({ view: 'Grid view' }).all();
 
     return records.map((record) => ({
       id: record.id,
-      Title: record.fields.Title || undefined,
-      Quicktake: record.fields.Quicktake || undefined,
-      Details: record.fields.Details || undefined,
-      Price: record.fields.Price || undefined,
-      ImageURL: record.fields.ImageURL || undefined,
+      Title: typeof record.fields.Title === 'string' ? record.fields.Title : '',
+      Quicktake: typeof record.fields.Quicktake === 'string' ? record.fields.Quicktake : '',
+      Details: typeof record.fields.Details === 'string' ? record.fields.Details : '',
+      Price: typeof record.fields.Price === 'number' ? record.fields.Price : 0, // Keep as number
+      ImageURL: typeof record.fields.ImageURL === 'string' ? record.fields.ImageURL : '',
       Type: Array.isArray(record.fields.Type)
-        ? record.fields.Type.map((type) =>
-            typeof type === 'object' && type !== null ? type.name : String(type)
-          ).join(', ')
+        ? record.fields.Type.join(', ') // Join arrays into a string
         : typeof record.fields.Type === 'string'
         ? record.fields.Type
-        : undefined,
+        : '',
     }));
   } catch (error) {
     console.error('Error fetching data from Airtable:', error);
