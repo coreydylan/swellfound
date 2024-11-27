@@ -139,19 +139,6 @@ const SearchAndCards: React.FC = () => {
                   setSelectedItem(selectedItem?.id === rec.id ? null : rec)
                 }
               >
-                {/* Type Bubble */}
-                {rec.Type && (
-                  <div
-                    className="absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-medium"
-                    style={{
-                      backgroundColor: '#034641',
-                      color: '#dcf0fa',
-                    }}
-                  >
-                    {rec.Type}
-                  </div>
-                )}
-
                 {/* Image and Title */}
                 <div className="flex">
                   {rec.ImageURL && (
