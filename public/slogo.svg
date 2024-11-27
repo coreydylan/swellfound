@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70.51 69.93">
+  <defs>
+    <!-- Gradient Definition with Animation -->
+    <linearGradient id="animatedGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#034641">
+        <animate
+          attributeName="stop-color"
+          values="#034641; #0abeb4; #1c5f5a; #034641"
+          dur="5s"
+          repeatCount="indefinite"
+        />
+      </stop>
+      <stop offset="100%" stop-color="#0abeb4">
+        <animate
+          attributeName="stop-color"
+          values="#0abeb4; #30e4da; #034641; #0abeb4"
+          dur="5s"
+          repeatCount="indefinite"
+        />
+      </stop>
+    </linearGradient>
+  </defs>
+
+  <!-- Apply Gradient to the Path -->
+  <g id="Layer_1-2" data-name="Layer 1">
+    <path
+      d="M39.09,7.1c-8.79-6.53-11.8-2.39-6.03,2.51,7.03,5.9,30.01,17.96,34.78,31.89,6.03,16.95-6.03,32.14-26.12,27.62-13.44-3.14-26.75.13-35.79-6.65-13.44-10.04-1.76-27.62,11.93-20.47,10.04,5.27,14.06,16.7,23.23,21.72,8.04,4.39,12.43,1.76,5.78-5.02-7.79-7.91-29.01-17.7-35.53-32.4C3.31,8.1,15.61-5.84,41.1,2.45c11.17,3.64,17.08,2.89,24.74,7.28,10.3,5.9,1.88,19.46-8.92,12.81-8.79-5.65-9.67-9.29-17.83-15.44Z"
+      fill="url(#animatedGradient)"
+    />
+  </g>
+</svg>
