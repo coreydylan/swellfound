@@ -38,7 +38,7 @@ const AnimatedSLogo: React.FC<{ showLogo: boolean }> = ({ showLogo }) => {
 
 const SearchAndCards: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedItem, setSelectedItem] = useState<AirtableRecord | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null); // Keep track of the selected card's ID
   const [recommendations, setRecommendations] = useState<AirtableRecord[]>([]);
   const [filteredRecs, setFilteredRecs] = useState<AirtableRecord[]>([]);
   const [showLogo, setShowLogo] = useState(true);
@@ -70,7 +70,7 @@ const SearchAndCards: React.FC = () => {
 
     const filtered = recommendations.filter((rec) => {
       const combinedFields = `${rec.Title || ''} ${rec.Quicktake || ''} ${rec.Details || ''} ${rec.Type || ''}`.toLowerCase();
-      return queryTerms.some((term: string) => combinedFields.includes(term));
+      return queryTerms.some((term) => combinedFields.includes(term));
     });
 
     setFilteredRecs(filtered);
@@ -130,12 +130,12 @@ const SearchAndCards: React.FC = () => {
           }`}
         >
           {filteredRecs.length > 0 ? (
-            filteredRecs.map((rec, index) => (
+            filteredRecs.map((rec) => (
               <div
                 key={rec.id}
-                className="relative p-4 border border-secondary rounded-lg shadow hover:shadow-lg transition-all bg-secondary text-primary cursor-pointer transform transition duration-700"
+                className="relative p-4 border border-secondary rounded-lg shadow hover:shadow-lg transition-all bg-secondary text-primary cursor-pointer"
                 onClick={() =>
-                  setSelectedItem(selectedItem?.id === rec.id ? null : rec)
+                  setSelectedItemId(selectedItemId === rec.id ? null : rec.id)
                 }
               >
                 {/* Type Bubble */}
@@ -167,6 +167,14 @@ const SearchAndCards: React.FC = () => {
                     <p className="text-sm text-gray-2">{rec.Quicktake || 'No quick take available.'}</p>
                   </div>
                 </div>
+
+                {/* Expanded Details */}
+                {selectedItemId === rec.id && (
+                  <div className="mt-4 text-left">
+                    <p className="text-sm text-gray-3">{rec.Details || 'No details available.'}</p>
+                    {rec.Price && <p className="font-semibold">Price: ${rec.Price}</p>}
+                  </div>
+                )}
               </div>
             ))
           ) : (
