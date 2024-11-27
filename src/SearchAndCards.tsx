@@ -109,7 +109,7 @@ const SearchAndCards: React.FC = () => {
 
       // Adjust for mobile and desktop
       if (window.innerWidth <= 768) {
-        const mobileOffset = (cardsBottom + viewportHeight) / 2;
+        const mobileOffset = (cardsBottom + viewportHeight) / 2 - 50;
         setLogoOffset(mobileOffset);
       } else {
         setLogoOffset(searchBarBottom + 250); // Desktop: 250px below the search bar
