@@ -83,6 +83,7 @@ const SearchAndCards: React.FC = () => {
   const [filteredRecs, setFilteredRecs] = useState<AirtableRecord[]>([]);
   const [showWelcome, setShowWelcome] = useState(true);
   const searchBarRef = useRef<HTMLDivElement | null>(null);
+  const cardsRef = useRef<HTMLDivElement | null>(null);
   const [logoOffset, setLogoOffset] = useState<number>(250); // Default offset
 
   useEffect(() => {
@@ -100,15 +101,15 @@ const SearchAndCards: React.FC = () => {
 
   useEffect(() => {
     const updateLogoPosition = () => {
-      if (!searchBarRef.current) return;
+      if (!searchBarRef.current || !cardsRef.current) return;
 
-      const searchBarBottom =
-        searchBarRef.current.getBoundingClientRect().bottom;
+      const searchBarBottom = searchBarRef.current.getBoundingClientRect().bottom;
+      const cardsBottom = cardsRef.current.getBoundingClientRect().bottom;
       const viewportHeight = window.innerHeight;
 
       // Adjust for mobile and desktop
       if (window.innerWidth <= 768) {
-        const mobileOffset = (searchBarBottom + viewportHeight) / 2 - searchBarBottom;
+        const mobileOffset = (cardsBottom + viewportHeight) / 2;
         setLogoOffset(mobileOffset);
       } else {
         setLogoOffset(searchBarBottom + 250); // Desktop: 250px below the search bar
@@ -197,15 +198,17 @@ const SearchAndCards: React.FC = () => {
 
         {/* Welcome Cards */}
         {showWelcome && (
-          <WelcomeCards
-            onComplete={() => setShowWelcome(false)}
-            cardWidth={`${cardWidth}px`}
-          />
+          <div ref={cardsRef}>
+            <WelcomeCards
+              onComplete={() => setShowWelcome(false)}
+              cardWidth={`${cardWidth}px`}
+            />
+          </div>
         )}
 
         {/* Results Area */}
         {!showWelcome && (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-4" ref={cardsRef}>
             {filteredRecs.length > 0 ? (
               filteredRecs.map((rec) => (
                 <StandardCard
