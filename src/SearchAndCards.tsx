@@ -187,7 +187,7 @@ function SearchAndCards() {
         <div className="relative w-full mb-2" ref={searchBarRef}>
           <input
             type="text"
-            placeholder="Search our Standards..."
+            placeholder="search our Standards..."
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             disabled={viewAll}
@@ -217,7 +217,7 @@ function SearchAndCards() {
     onClick={handleViewAllToggle}
     className="px-4 py-2 text-sm font-medium text-[#e0eff9] bg-transparent hover:underline hover:text-[#A7D6CB] rounded-lg transition-all duration-200"
   >
-    {viewAll ? '← Back to Search' : 'View All Standards →'}
+    {viewAll ? '← Back to Search' : 'view all Standards →'}
   </button>
 </div>
 

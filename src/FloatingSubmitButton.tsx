@@ -49,21 +49,27 @@ const FloatingSubmitForm: React.FC = () => {
   const handleSubmit = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
-
+  
     try {
       await createAirtableRecord(formData);
+  
+      // Close the form immediately after submission
       setIsFormOpen(false);
-      setIsSubmitting(false);
-      setFormData({
-        Standard: '',
-        Title: '',
-        Quicktake: '',
-        Details: '',
-        SubmitForm_ThreeWords: '',
-        SubmitForm_Name: '',
-        SubmitForm_Email: '',
-      });
-      setCurrentStep(0);
+  
+      // Reset form state only after closing the form
+      setTimeout(() => {
+        setFormData({
+          Standard: '',
+          Title: '',
+          Quicktake: '',
+          Details: '',
+          SubmitForm_ThreeWords: '',
+          SubmitForm_Name: '',
+          SubmitForm_Email: '',
+        });
+        setCurrentStep(0);
+        setIsSubmitting(false);
+      }, 300); // Delay resetting to avoid flicker
     } catch (error) {
       console.error('Error submitting form:', error);
       alert('Failed to submit the form. Please try again.');
@@ -101,12 +107,20 @@ const FloatingSubmitForm: React.FC = () => {
 
   return (
     <div className="relative">
-      <button
-        onClick={toggleForm}
-        className="fixed bottom-8 right-8 w-16 h-16 bg-[#A7D6CB] text-white rounded-full flex items-center justify-center text-2xl shadow-lg hover:bg-[#A0D5C7] transition-all duration-200"
-      >
-        +
-      </button>
+<div
+  className="fixed bottom-8 right-8 text-[#1C5F5A] text-lg font-medium transition-all duration-200 cursor-pointer"
+  onClick={toggleForm}
+>
+  <span className="inline-flex items-center">
+    <span className="mr-2 hover:text-[#b1d5cb] hover:underline">+ suggest a Standard</span>
+    <span
+      className={`inline-block transition-transform duration-500 ${
+        isFormOpen ? 'animate-spin-fast' : ''
+      }`}
+    >
+    </span>
+  </span>
+</div>
 
       {isFormOpen && (
         <div
@@ -124,7 +138,7 @@ const FloatingSubmitForm: React.FC = () => {
             </button>
           </div>
 
-          <h3 className="text-xl font-semibold text-[#034641] mb-4">Submit A Standard</h3>
+          <h3 className="text-xl font-semibold text-[#034641] mb-4">suggest a Standard</h3>
           <p className="text-sm text-[#1c5f5a] mb-6">
             Share your ideas and contribute your standards for others to discover!
           </p>
