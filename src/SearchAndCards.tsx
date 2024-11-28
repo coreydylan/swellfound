@@ -24,7 +24,7 @@ function StandardCard({ record, isExpanded, onToggle }: {
           {record.Type_Text[0]}
         </div>
       )}
-      
+
       {/* Top Section - Darker Color */}
       <div className="p-6 bg-[#e0eff9]">
         <div className="flex gap-6">
@@ -57,7 +57,7 @@ function StandardCard({ record, isExpanded, onToggle }: {
           <p className="prose text-sm mb-6 text-left text-[#1c5f5a]">
             {record.Details}
           </p>
-          
+
           {/* Buy Button */}
           {(record.BuyURL || record.Price) && (
             <div className="flex gap-4 mt-4">
@@ -86,14 +86,19 @@ function SearchAndCards() {
   const [filteredRecs, setFilteredRecs] = useState<AirtableRecord[]>([]);
   const [showWelcome, setShowWelcome] = useState(true);
   const [viewAll, setViewAll] = useState(false);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
   const searchBarRef = useRef<HTMLDivElement | null>(null);
   const cardsRef = useRef<HTMLDivElement | null>(null);
   const [logoOffset, setLogoOffset] = useState<number>(250);
 
+  const uniqueTypes = [
+    ...new Set(recommendations.map((rec) => rec.Type_Text).flat()),
+  ];
+
   useEffect(() => {
     const loadData = async () => {
       try {
-        const data = await fetchAirtableData();
+        const data: AirtableRecord[] = await fetchAirtableData();
         setRecommendations(data);
       } catch (error) {
         console.error('Error fetching data from Airtable:', error);
@@ -123,26 +128,35 @@ function SearchAndCards() {
   }, []);
 
   const debouncedFilter = debounce((query: string) => {
-    if (viewAll || !query.trim()) {
+    let filtered = recommendations;
+
+    if (!query.trim() && !selectedType) {
       setFilteredRecs(viewAll ? recommendations : []);
       return;
     }
 
-    const processedQuery = query.toLowerCase().trim();
-    const filtered = recommendations.filter((rec) => {
-      const combinedFields = [
-        rec.Title,
-        rec.Quicktake,
-        rec.Details,
-        rec.Type_Text,
-        rec.Standard,
-        rec.SustainabilityNotes,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return combinedFields.includes(processedQuery);
-    });
+    if (query.trim()) {
+      const processedQuery = query.toLowerCase().trim();
+      filtered = filtered.filter((rec) => {
+        const combinedFields = [
+          rec.Title,
+          rec.Quicktake,
+          rec.Details,
+          rec.Type_Text,
+          rec.Standard,
+          rec.SustainabilityNotes,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return combinedFields.includes(processedQuery);
+      });
+    }
+
+    if (selectedType) {
+      filtered = filtered.filter((rec) => rec.Type_Text?.includes(selectedType));
+    }
+
     setFilteredRecs(filtered);
   }, 300);
 
@@ -153,19 +167,34 @@ function SearchAndCards() {
   };
 
   const handleViewAllToggle = () => {
-    setViewAll(!viewAll);
+    const newViewAll = !viewAll;
+    setViewAll(newViewAll);
     setShowWelcome(false);
-    if (!viewAll) {
+    
+    if (newViewAll) {
       setSearchQuery('');
+      setSelectedType(null);
       setFilteredRecs(recommendations);
     } else {
+      setSearchQuery('');
+      setSelectedType(null);
       setFilteredRecs([]);
+    }
+  };
+
+  const handleTypeFilterChange = (type: string) => {
+    setSelectedType(type === '' ? null : type);
+    if (type === '') {
+      setFilteredRecs(recommendations);
+    } else {
+      const filtered = recommendations.filter(rec => rec.Type_Text?.includes(type));
+      setFilteredRecs(filtered);
     }
   };
 
   useEffect(() => {
     debouncedFilter(searchQuery);
-  }, [searchQuery, recommendations, viewAll]);
+  }, [searchQuery, recommendations, selectedType, viewAll]);
 
   const toggleExpand = (id: string) => {
     setSelectedItemId((prev) => (prev === id ? null : id));
@@ -182,44 +211,89 @@ function SearchAndCards() {
           alt="SwellFound Logo"
           className="mx-auto mb-8 h-24"
         />
-        
-        {/* Search Section */}
-        <div className="relative w-full mb-2" ref={searchBarRef}>
-          <input
-            type="text"
-            placeholder="search our Standards..."
-            value={searchQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            disabled={viewAll}
-            className="w-full p-4 pr-12 border border-secondary rounded-lg shadow-sm bg-secondary text-primary disabled:opacity-50"
-          />
-          <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#034641"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className={viewAll ? 'opacity-50' : ''}
+
+        {/* Search Container */}
+        <div className="space-y-2" ref={searchBarRef}>
+          {/* Search Bar */}
+          <div className="relative w-full mb-2">
+            <input
+              type="text"
+              placeholder="search our Standards..."
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              disabled={viewAll}
+              className="w-full p-4 pr-12 border border-secondary rounded-lg shadow-sm bg-secondary text-primary disabled:opacity-50 transition-colors duration-200"
+            />
+            <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#034641"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={viewAll ? 'opacity-50' : ''}
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </div>
+          </div>
+
+          {/* View All Toggle */}
+          <div className="flex justify-end">
+            <button
+              onClick={handleViewAllToggle}
+              className="px-4 py-2 text-sm font-medium text-[#e0eff9] bg-transparent hover:underline hover:text-[#A7D6CB] rounded-lg transition-all duration-200"
             >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
+              {viewAll ? '← Back to Search' : 'view all Standards →'}
+            </button>
+          </div>
+
+          {/* Type Filter */}
+          <div 
+            className={`
+              transition-all duration-300 ease-in-out
+              ${viewAll 
+                ? 'opacity-100 max-h-20' 
+                : 'opacity-0 max-h-0 overflow-hidden'
+              }
+            `}
+          >
+            <div className="flex justify-start">
+              <select
+                onChange={(e) => handleTypeFilterChange(e.target.value)}
+                value={selectedType || ''}
+                className="
+                  w-48 px-3 py-2 text-sm
+                  bg-[#e0eff9]/50 text-[#034641]
+                  border border-[#034641]/20
+                  rounded-lg
+                  transition-all duration-200
+                  hover:border-[#034641]/40
+                  focus:outline-none focus:border-[#034641]/60
+                  appearance-none
+                  cursor-pointer
+                  bg-no-repeat bg-right
+                  pr-8
+                "
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23034641' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E")`,
+                  backgroundPosition: 'right 0.75rem center'
+                }}
+              >
+                <option value="">All Types</option>
+                {uniqueTypes.map((type, index) => (
+                  <option key={index} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
-
-{/* View All Toggle */}
-<div className="flex justify-end mb-6">
-  <button
-    onClick={handleViewAllToggle}
-    className="px-4 py-2 text-sm font-medium text-[#e0eff9] bg-transparent hover:underline hover:text-[#A7D6CB] rounded-lg transition-all duration-200"
-  >
-    {viewAll ? '← Back to Search' : 'view all Standards →'}
-  </button>
-</div>
 
         {/* Animated S Logo */}
         <div
@@ -251,7 +325,7 @@ function SearchAndCards() {
 
         {/* Results Area */}
         {!showWelcome && (
-          <div className="grid grid-cols-1 gap-4" ref={cardsRef}>
+          <div className="grid grid-cols-1 gap-4 mt-4" ref={cardsRef}>
             {filteredRecs.length > 0 ? (
               filteredRecs.map((rec) => (
                 <StandardCard
