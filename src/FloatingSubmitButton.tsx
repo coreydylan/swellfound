@@ -1,34 +1,33 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, CheckCircle } from 'lucide-react';
 import { createAirtableRecord } from './airtable';
 
 const FloatingSubmitForm: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
-    SubmitForm_Name: '',
-    SubmitForm_Email: '',
-    SubmitForm_ThreeWords: '',
-    Title: '',
     Standard: '',
-    SubmitForm_Type: '',
+    Title: '',
     Quicktake: '',
     Details: '',
+    SubmitForm_ThreeWords: '',
+    SubmitForm_Name: '',
+    SubmitForm_Email: '',
   });
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Tracks submission state
+  const [isSubmitted, setIsSubmitted] = useState(false); // Tracks animation state
+  const [showCheckmark, setShowCheckmark] = useState(false);
 
-  // Initialize refs for inputs
   const inputRefs = useRef<(HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null)[]>([]);
 
   const steps = [
-    { id: 'SubmitForm_Name', type: 'text', placeholder: 'Enter your name' },
-    { id: 'SubmitForm_Email', type: 'email', placeholder: 'Enter your email' },
-    { id: 'SubmitForm_ThreeWords', type: 'text', placeholder: 'Describe in three words' },
-    { id: 'Title', type: 'text', placeholder: 'Enter the title' },
-    { id: 'Standard', type: 'text', placeholder: 'Enter the standard' },
-    { id: 'SubmitForm_Type', type: 'select', options: ['Taste', 'Technique', 'Tool', 'Toy'] },
-    { id: 'Quicktake', type: 'textarea', placeholder: 'Give a quick take on the standard' },
-    { id: 'Details', type: 'textarea', placeholder: 'Describe the standard in detail' },
+    { id: 'Standard', type: 'text', placeholder: "What's your Standard? (e.g. Eggo Waffles, Method Soap, Taylor Guitars)" },
+    { id: 'Title', type: 'text', placeholder: "What's your Standard for? (e.g. Healthy Breakfast, Hand Soap, Acoustic Guitar)" },
+    { id: 'Quicktake', type: 'textarea', placeholder: 'Give us your one-liner Quicktake on this Standard? Why is it great?' },
+    { id: 'Details', type: 'textarea', placeholder: 'Provide a longer 3-5 sentence description of your Standard' },
+    { id: 'SubmitForm_ThreeWords', type: 'text', placeholder: 'Describe your Standard in three words...' },
+    { id: 'SubmitForm_Name', type: 'text', placeholder: "What's your first and last name?" },
+    { id: 'SubmitForm_Email', type: 'email', placeholder: "What's your email?" },
   ];
 
   const handleNextStep = () => {
@@ -50,39 +49,42 @@ const FloatingSubmitForm: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return; // Prevent duplicate submissions
+    setIsSubmitting(true); // Indicate that submission is in progress
+
     try {
-      const formattedData = {
-        SubmitForm_Name: formData.SubmitForm_Name,
-        SubmitForm_Email: formData.SubmitForm_Email,
-        SubmitForm_ThreeWords: formData.SubmitForm_ThreeWords,
-        Title: formData.Title,
-        Standard: formData.Standard,
-        SubmitForm_Type: formData.SubmitForm_Type,
-        Quicktake: formData.Quicktake,
-        Details: formData.Details,
-      };
+      await createAirtableRecord(formData);
 
-      await createAirtableRecord(formattedData);
-
-      // Trigger success animation
+      // Close the form and show the checkmark
       setIsSubmitted(true);
       setTimeout(() => {
-        setIsSubmitted(false);
         setIsFormOpen(false);
-      }, 2000);
+      }, 500); // Ensure form fully closes
+
+      // Show the checkmark and reset the form
+      setTimeout(() => {
+        setShowCheckmark(true);
+        setIsSubmitted(false);
+      }, 600);
+
+      setTimeout(() => {
+        setShowCheckmark(false);
+        setIsSubmitting(false);
+      }, 3000);
 
       setFormData({
-        SubmitForm_Name: '',
-        SubmitForm_Email: '',
-        SubmitForm_ThreeWords: '',
-        Title: '',
         Standard: '',
-        SubmitForm_Type: '',
+        Title: '',
         Quicktake: '',
         Details: '',
+        SubmitForm_ThreeWords: '',
+        SubmitForm_Name: '',
+        SubmitForm_Email: '',
       });
     } catch (error) {
       console.error('Error submitting form:', error);
+      alert('Failed to submit the form. Please try again.');
+      setIsSubmitting(false);
     }
   };
 
@@ -98,6 +100,7 @@ const FloatingSubmitForm: React.FC = () => {
   };
 
   const toggleForm = () => {
+    if (isSubmitting) return; // Prevent toggling while submitting
     setIsFormOpen(!isFormOpen);
   };
 
@@ -118,16 +121,22 @@ const FloatingSubmitForm: React.FC = () => {
 
       {isFormOpen && (
         <div
-          className={`fixed bottom-0 left-0 right-0 bg-white p-6 rounded-t-3xl shadow-lg animate-bounce-in`}
+          className={`fixed bottom-0 left-0 right-0 bg-white p-6 rounded-t-3xl shadow-lg ${
+            isSubmitted ? 'animate-slide-down' : 'animate-bounce-in'
+          }`}
         >
           <div className="flex justify-end">
-            <button onClick={toggleForm} className="text-xl text-[#034641] hover:text-[#A7D6CB]">
+            <button
+              onClick={toggleForm}
+              className="text-xl text-[#034641] hover:text-[#A7D6CB] disabled:opacity-50"
+              disabled={isSubmitting}
+            >
               X
             </button>
           </div>
           <h3 className="text-xl font-semibold text-[#034641] mb-4">Submit A Standard</h3>
           <p className="text-sm text-[#1c5f5a] mb-6">
-            Have an idea that you think should be considered a Standard? Share your thoughts!
+            Share your ideas and contribute your standards for others to discover!
           </p>
 
           <div className="relative w-full">
@@ -149,23 +158,8 @@ const FloatingSubmitForm: React.FC = () => {
                       onKeyDown={handleKeyDown}
                       className="w-full border-none border-b-2 border-[#034641] bg-transparent focus:outline-none focus:border-[#A7D6CB] focus:ring-0 placeholder-[#a0a0a0]"
                       placeholder={step.placeholder}
+                      disabled={isSubmitting}
                     />
-                  ) : step.type === 'select' ? (
-                    <select
-                      ref={(el) => (inputRefs.current[index] = el)}
-                      id={step.id}
-                      value={formData[step.id as keyof typeof formData]}
-                      onChange={handleInputChange}
-                      onKeyDown={handleKeyDown}
-                      className="w-full border-none border-b-2 border-[#034641] bg-transparent focus:outline-none focus:border-[#A7D6CB] focus:ring-0"
-                    >
-                      <option value="">Select an option</option>
-                      {step.options?.map((option, i) => (
-                        <option key={i} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
                   ) : step.type === 'textarea' ? (
                     <textarea
                       ref={(el) => (inputRefs.current[index] = el)}
@@ -176,6 +170,7 @@ const FloatingSubmitForm: React.FC = () => {
                       onKeyDown={handleKeyDown}
                       className="w-full border-none border-b-2 border-[#034641] bg-transparent focus:outline-none focus:border-[#A7D6CB] focus:ring-0 placeholder-[#a0a0a0] resize-none"
                       placeholder={step.placeholder}
+                      disabled={isSubmitting}
                     />
                   ) : null}
                 </div>
@@ -187,6 +182,7 @@ const FloatingSubmitForm: React.FC = () => {
             <button
               onClick={handlePreviousStep}
               className="fixed bottom-6 left-6 text-[#A7D6CB] text-2xl hover:text-[#034641] transition-all duration-200"
+              disabled={isSubmitting}
             >
               &lt;
             </button>
@@ -196,6 +192,7 @@ const FloatingSubmitForm: React.FC = () => {
             <button
               onClick={handleNextStep}
               className="fixed bottom-6 right-6 bg-[#A7D6CB] text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl hover:bg-[#A0D5C7] transition-all duration-200"
+              disabled={isSubmitting}
             >
               <ChevronRight className="w-6 h-6" />
             </button>
@@ -203,6 +200,7 @@ const FloatingSubmitForm: React.FC = () => {
             <button
               onClick={handleSubmit}
               className="fixed bottom-6 right-6 px-6 py-2 bg-[#034641] text-white rounded-full text-lg hover:bg-[#046456] transition-all duration-200"
+              disabled={isSubmitting}
             >
               Submit
             </button>
@@ -210,9 +208,9 @@ const FloatingSubmitForm: React.FC = () => {
         </div>
       )}
 
-      {isSubmitted && (
-        <div className="fixed inset-0 flex items-center justify-center">
-          <div className="firework-animation">🎇</div>
+      {showCheckmark && (
+        <div className="fixed inset-0 flex items-center justify-center animate-fade-out">
+          <CheckCircle className="text-green-500 w-20 h-20" />
         </div>
       )}
     </div>
