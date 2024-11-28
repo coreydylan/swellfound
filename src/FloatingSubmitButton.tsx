@@ -14,11 +14,9 @@ const FloatingSubmitForm: React.FC = () => {
     SubmitForm_Name: '',
     SubmitForm_Email: '',
   });
-  const [isSubmitting, setIsSubmitting] = useState(false); // Tracks submission state
-  const [isSubmitted, setIsSubmitted] = useState(false); // Tracks animation state
-  const [showCheckmark, setShowCheckmark] = useState(false);
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null)[]>([]);
+  const timeouts = useRef<number[]>([]);
 
   const steps = [
     { id: 'Standard', type: 'text', placeholder: "What's your Standard? (e.g. Eggo Waffles, Method Soap, Taylor Guitars)" },
@@ -49,29 +47,13 @@ const FloatingSubmitForm: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (isSubmitting) return; // Prevent duplicate submissions
-    setIsSubmitting(true); // Indicate that submission is in progress
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
       await createAirtableRecord(formData);
-
-      // Close the form and show the checkmark
-      setIsSubmitted(true);
-      setTimeout(() => {
-        setIsFormOpen(false);
-      }, 500); // Ensure form fully closes
-
-      // Show the checkmark and reset the form
-      setTimeout(() => {
-        setShowCheckmark(true);
-        setIsSubmitted(false);
-      }, 600);
-
-      setTimeout(() => {
-        setShowCheckmark(false);
-        setIsSubmitting(false);
-      }, 3000);
-
+      setIsFormOpen(false);
+      setIsSubmitting(false);
       setFormData({
         Standard: '',
         Title: '',
@@ -81,6 +63,7 @@ const FloatingSubmitForm: React.FC = () => {
         SubmitForm_Name: '',
         SubmitForm_Email: '',
       });
+      setCurrentStep(0);
     } catch (error) {
       console.error('Error submitting form:', error);
       alert('Failed to submit the form. Please try again.');
@@ -100,7 +83,7 @@ const FloatingSubmitForm: React.FC = () => {
   };
 
   const toggleForm = () => {
-    if (isSubmitting) return; // Prevent toggling while submitting
+    if (isSubmitting) return;
     setIsFormOpen(!isFormOpen);
   };
 
@@ -109,6 +92,12 @@ const FloatingSubmitForm: React.FC = () => {
       inputRefs.current[currentStep]?.focus();
     }
   }, [currentStep]);
+
+  useEffect(() => {
+    return () => {
+      timeouts.current.forEach((timeout) => clearTimeout(timeout));
+    };
+  }, []);
 
   return (
     <div className="relative">
@@ -122,7 +111,7 @@ const FloatingSubmitForm: React.FC = () => {
       {isFormOpen && (
         <div
           className={`fixed bottom-0 left-0 right-0 bg-white p-6 rounded-t-3xl shadow-lg ${
-            isSubmitted ? 'animate-slide-down' : 'animate-bounce-in'
+            isSubmitting ? 'animate-slide-down' : ''
           }`}
         >
           <div className="flex justify-end">
@@ -134,6 +123,7 @@ const FloatingSubmitForm: React.FC = () => {
               X
             </button>
           </div>
+
           <h3 className="text-xl font-semibold text-[#034641] mb-4">Submit A Standard</h3>
           <p className="text-sm text-[#1c5f5a] mb-6">
             Share your ideas and contribute your standards for others to discover!
@@ -199,18 +189,16 @@ const FloatingSubmitForm: React.FC = () => {
           ) : (
             <button
               onClick={handleSubmit}
-              className="fixed bottom-6 right-6 px-6 py-2 bg-[#034641] text-white rounded-full text-lg hover:bg-[#046456] transition-all duration-200"
+              className={`fixed bottom-6 right-6 px-6 py-2 rounded-full text-lg text-white transition-all duration-200 ${
+                isSubmitting
+                  ? 'bg-[#A7D6CB] border-4 border-dashed border-[#A7D6CB] animate-pulse'
+                  : 'bg-[#034641] hover:bg-[#046456]'
+              }`}
               disabled={isSubmitting}
             >
-              Submit
+              {isSubmitting ? <CheckCircle className="w-6 h-6 text-white" /> : 'Submit'}
             </button>
           )}
-        </div>
-      )}
-
-      {showCheckmark && (
-        <div className="fixed inset-0 flex items-center justify-center animate-fade-out">
-          <CheckCircle className="text-green-500 w-20 h-20" />
         </div>
       )}
     </div>
