@@ -13,20 +13,29 @@ function StandardCard({ record, isExpanded, onToggle }: {
       className={`relative overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-200 rounded-lg`}
       onClick={onToggle}
     >
-      {/* Type Tag */}
-      {record.Type_Text && record.Type_Text.length > 0 && (
-        <div
-          className="absolute top-3 right-3 text-xs font-semibold uppercase"
-          style={{
-            color: '#034641',
-          }}
-        >
-          {record.Type_Text[0]}
-        </div>
-      )}
-
-      {/* Top Section - Darker Color */}
       <div className="p-6 bg-[#e0eff9]">
+        {/* Type Tag Container */}
+        <div className="flex md:block">
+          {record.Type_Text && record.Type_Text.length > 0 && (
+            <div
+              className="
+                text-xs font-semibold uppercase
+                md:absolute md:top-3 md:right-3
+                mb-4
+                md:mb-0
+                border border-[#034641] px-2 py-1 rounded-md
+                inline-block
+              "
+              style={{
+                color: '#034641',
+              }}
+            >
+              {record.Type_Text[0]}
+            </div>
+          )}
+        </div>
+
+        {/* Content Container */}
         <div className="flex gap-6">
           {record.ImageURL && (
             <div className="flex-shrink-0 w-32 h-32">

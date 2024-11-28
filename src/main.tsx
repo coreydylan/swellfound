@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import SearchAndCards from './SearchAndCards';
@@ -8,50 +8,46 @@ document.documentElement.style.backgroundColor = '#034641';
 document.body.style.backgroundColor = '#034641';
 
 const MainApp = () => {
-  const [showButton, setShowButton] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [showButton, setShowButton] = useState(true);
+  const [isAtBottom, setIsAtBottom] = useState(false);
   
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setShowButton(entry.isIntersecting);
-      },
-      {
-        root: null,
-        threshold: 0.1,
-        rootMargin: '50px' // Add some margin to trigger earlier
+    const handleScroll = () => {
+      // Check if we're at the bottom
+      const isBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100;
+      setIsAtBottom(isBottom);
+
+      // Show button if we're at the top or bottom, hide it otherwise
+      if (window.scrollY < 100 || isBottom) {
+        setShowButton(true);
+      } else {
+        setShowButton(false);
       }
-    );
-    if (bottomRef.current) {
-      observer.observe(bottomRef.current);
-    }
-    return () => observer.disconnect();
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
     <div className="relative min-h-screen bg-primary">
-      {/* Main content wrapper */}
-      <div className="flex flex-col min-h-screen bg-primary">
-        {/* Main content area */}
-        <div className="flex-1">
-          <SearchAndCards />
-        </div>
-        
-        {/* Bottom detector */}
-        <div ref={bottomRef} className="h-1 w-full bg-primary" />
-        
-        {/* Floating button with transition */}
-        <div
+      <SearchAndCards />
+      
+      {showButton && (
+        <div 
           className={`
-            fixed bottom-0 left-0 right-0 
-            transform transition-transform duration-300 ease-in-out
-            ${showButton ? 'translate-y-0' : 'translate-y-full'}
-            bg-primary pb-4 pt-8
+            fixed bg-primary transition-all duration-200
+            ${isAtBottom 
+              ? 'bottom-0 left-0 right-0 p-4 border-t border-primary-tint2/10' 
+              : 'bottom-4 right-4'
+            }
           `}
         >
-          <FloatingSubmitButton />
+          <div className={isAtBottom ? 'max-w-2xl mx-auto' : ''}>
+            <FloatingSubmitButton />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
