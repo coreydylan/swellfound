@@ -85,6 +85,7 @@ function SearchAndCards() {
   const [recommendations, setRecommendations] = useState<AirtableRecord[]>([]);
   const [filteredRecs, setFilteredRecs] = useState<AirtableRecord[]>([]);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [viewAll, setViewAll] = useState(false);
   const searchBarRef = useRef<HTMLDivElement | null>(null);
   const cardsRef = useRef<HTMLDivElement | null>(null);
   const [logoOffset, setLogoOffset] = useState<number>(250);
@@ -92,7 +93,7 @@ function SearchAndCards() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const data = await fetchAirtableData(); // Remove the explicit type annotation
+        const data = await fetchAirtableData();
         setRecommendations(data);
       } catch (error) {
         console.error('Error fetching data from Airtable:', error);
@@ -122,8 +123,8 @@ function SearchAndCards() {
   }, []);
 
   const debouncedFilter = debounce((query: string) => {
-    if (!query.trim()) {
-      setFilteredRecs([]);
+    if (viewAll || !query.trim()) {
+      setFilteredRecs(viewAll ? recommendations : []);
       return;
     }
 
@@ -148,11 +149,23 @@ function SearchAndCards() {
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
     setShowWelcome(false);
+    setViewAll(false);
+  };
+
+  const handleViewAllToggle = () => {
+    setViewAll(!viewAll);
+    setShowWelcome(false);
+    if (!viewAll) {
+      setSearchQuery('');
+      setFilteredRecs(recommendations);
+    } else {
+      setFilteredRecs([]);
+    }
   };
 
   useEffect(() => {
     debouncedFilter(searchQuery);
-  }, [searchQuery, recommendations]);
+  }, [searchQuery, recommendations, viewAll]);
 
   const toggleExpand = (id: string) => {
     setSelectedItemId((prev) => (prev === id ? null : id));
@@ -169,14 +182,16 @@ function SearchAndCards() {
           alt="SwellFound Logo"
           className="mx-auto mb-8 h-24"
         />
-        {/* Search Bar */}
-        <div className="relative w-full mb-6" ref={searchBarRef}>
+        
+        {/* Search Section */}
+        <div className="relative w-full mb-2" ref={searchBarRef}>
           <input
             type="text"
             placeholder="Search our Standards..."
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full p-4 pr-12 border border-secondary rounded-lg shadow-sm bg-secondary text-primary"
+            disabled={viewAll}
+            className="w-full p-4 pr-12 border border-secondary rounded-lg shadow-sm bg-secondary text-primary disabled:opacity-50"
           />
           <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
             <svg
@@ -188,16 +203,28 @@ function SearchAndCards() {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              className={viewAll ? 'opacity-50' : ''}
             >
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
           </div>
         </div>
+
+{/* View All Toggle */}
+<div className="flex justify-end mb-6">
+  <button
+    onClick={handleViewAllToggle}
+    className="px-4 py-2 text-sm font-medium text-[#e0eff9] bg-transparent hover:underline hover:text-[#A7D6CB] rounded-lg transition-all duration-200"
+  >
+    {viewAll ? '← Back to Search' : 'View All Standards →'}
+  </button>
+</div>
+
         {/* Animated S Logo */}
         <div
           className={`absolute left-1/2 transform -translate-x-1/2 transition-opacity duration-500 ${
-            searchQuery ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            searchQuery || viewAll ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
           style={{
             top: `${logoOffset}px`,
@@ -211,6 +238,7 @@ function SearchAndCards() {
             />
           </div>
         </div>
+
         {/* Welcome Cards */}
         {showWelcome && (
           <div ref={cardsRef}>
@@ -220,6 +248,7 @@ function SearchAndCards() {
             />
           </div>
         )}
+
         {/* Results Area */}
         {!showWelcome && (
           <div className="grid grid-cols-1 gap-4" ref={cardsRef}>
