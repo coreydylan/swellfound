@@ -1,11 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+
   theme: {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#034641',           // Top color for the card
+          DEFAULT: '#034641',
           tint1: '#1c5f5a',
           tint2: '#367974',
           tint3: '#4f928d',
@@ -27,20 +28,25 @@ export default {
           2: '#171818',
           3: '#717171',
         },
-        // New lighter primary color for bottom of card
-        'primary-lighter': '#7a9ea8', // Lighter primary color (bottom color)
+        'primary-lighter': '#7a9ea8',
       },
+
       spacing: {
         128: '32rem',
         144: '36rem',
       },
+
       borderRadius: {
         '4xl': '2rem',
       },
+
       animation: {
         wiggle: 'wiggle 0.5s ease-in-out',
         fadeIn: 'fadeIn 0.5s ease-in-out',
+        'slide-down': 'slideDown 0.5s ease-out', // Slide-down animation
+        'bounce-in': 'bounceIn 0.6s ease-out',   // Bounce-in animation
       },
+
       keyframes: {
         wiggle: {
           '0%, 100%': { transform: 'rotate(0deg)' },
@@ -50,11 +56,21 @@ export default {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
         },
+        slideDown: {
+          '0%': { transform: 'translateY(0)' },
+          '100%': { transform: 'translateY(100%)' },
+        },
+        bounceIn: {
+          '0%': { transform: 'scale(0.8)', opacity: '0' },
+          '50%': { transform: 'scale(1.1)', opacity: '1' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
       },
     },
   },
+
   plugins: [
-    require('@tailwindcss/typography'), // Prose styling
-    require('@tailwindcss/forms'), // Forms styling (search bar, etc.)
+    require('@tailwindcss/typography'),
+    require('@tailwindcss/forms'),
   ],
 };

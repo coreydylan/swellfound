@@ -53,3 +53,18 @@ export const fetchAirtableData = async (): Promise<AirtableRecord[]> => {
     return [];
   }
 };
+
+export const createAirtableRecord = async (formData: Record<string, string | string[]>) => {
+  try {
+    const createdRecord = await base(AIRTABLE_TABLE_NAME).create([
+      {
+        fields: formData,
+      },
+    ]);
+    console.log('Record created in Airtable:', createdRecord);
+    return createdRecord;
+  } catch (error) {
+    console.error('Error creating record in Airtable:', error);
+    throw error;
+  }
+};
