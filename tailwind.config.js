@@ -5,7 +5,7 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#034641',
+          DEFAULT: '#034641',           // Top color for the card
           tint1: '#1c5f5a',
           tint2: '#367974',
           tint3: '#4f928d',
@@ -27,6 +27,8 @@ export default {
           2: '#171818',
           3: '#717171',
         },
+        // New lighter primary color for bottom of card
+        'primary-lighter': '#7a9ea8', // Lighter primary color (bottom color)
       },
       spacing: {
         128: '32rem',

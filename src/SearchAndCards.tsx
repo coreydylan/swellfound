@@ -1,106 +1,85 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { debounce } from 'lodash';
-import nlp from 'compromise';
 import WelcomeCards from './WelcomeCards';
-import { fetchAirtableData } from './airtable';
+import { fetchAirtableData, AirtableRecord } from './airtable';
 
-// Define AirtableRecord interface
-interface AirtableRecord {
-  id: string;
-  Title: string;
-  Standard: string;
-  Type_Text: string;
-  Quicktake: string;
-  Details: string;
-  Price: number;
-  ImageURL: string;
-  BuyURL: string;
-  SustainabilityNotes: string;
-}
-
-// Standard Card Component
-const StandardCard: React.FC<{
+function StandardCard({ record, isExpanded, onToggle }: {
   record: AirtableRecord;
   isExpanded: boolean;
   onToggle: () => void;
-}> = ({ record, isExpanded, onToggle }) => (
-  <div
-    className="relative p-6 cursor-pointer hover:shadow-lg transition-all duration-200 rounded-lg border border-secondary bg-secondary"
-    onClick={onToggle}
-  >
-    {/* Type Tag */}
-    {record.Type_Text && (
-      <div
-        className="absolute top-3 right-3 px-4 py-2 text-xs font-semibold"
-        style={{
-          backgroundColor: '#034641',
-          color: '#dcf0fa',
-          letterSpacing: '0.05em',
-          borderRadius: '12px',
-          minWidth: '60px',
-          textAlign: 'center',
-        }}
-      >
-        {record.Type_Text}
-      </div>
-    )}
-
-    {/* Main Content */}
-    <div className="flex gap-6">
-      {record.ImageURL && (
-        <div className="flex-shrink-0 w-32 h-32">
-          <img
-            src={record.ImageURL}
-            alt={record.Title}
-            className="w-full h-full object-cover rounded-lg"
-          />
+}) {
+  return (
+    <div
+      className={`relative overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-200 rounded-lg`}
+      onClick={onToggle}
+    >
+      {/* Type Tag */}
+      {record.Type_Text && record.Type_Text.length > 0 && (
+        <div
+          className="absolute top-3 right-3 text-xs font-semibold uppercase"
+          style={{
+            color: '#034641',
+          }}
+        >
+          {record.Type_Text[0]}
         </div>
       )}
-      <div className="flex-grow text-left">
-        <h3 className="text-sm mb-1 font-medium" style={{ color: '#367974' }}>
-          {record.Title}
-        </h3>
-        <h2 className="text-xl font-bold mb-2" style={{ color: '#034641' }}>
-          {record.Standard}
-        </h2>
-        <p className="text-sm" style={{ color: '#1c5f5a' }}>
-          {record.Quicktake}
-        </p>
-      </div>
-    </div>
-
-    {/* Expanded Content */}
-    {isExpanded && (
-      <div className="mt-6 pt-6 border-t" style={{ borderColor: '#0abeb4' }}>
-        <p className="prose text-sm mb-6 text-left" style={{ color: '#1c5f5a' }}>
-          {record.Details}
-        </p>
-
-        {/* Buy Button */}
-        {(record.BuyURL || record.Price > 0) && (
-          <div className="flex gap-4 mt-4">
-            {record.BuyURL && (
-              <a
-                href={record.BuyURL}
-                className="px-4 py-2 border rounded-lg transition-colors hover:bg-teal-600 hover:text-white"
-                style={{
-                  borderColor: '#0abeb4',
-                  color: '#0abeb4',
-                }}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {record.Price > 0 ? `Buy Now - $${record.Price}` : 'Where to Buy →'}
-              </a>
-            )}
+      
+      {/* Top Section - Darker Color */}
+      <div className="p-6 bg-[#e0eff9]">
+        <div className="flex gap-6">
+          {record.ImageURL && (
+            <div className="flex-shrink-0 w-32 h-32">
+              <img
+                src={record.ImageURL}
+                alt={record.Title}
+                className="w-full h-full object-cover rounded-lg"
+              />
+            </div>
+          )}
+          <div className="flex-grow text-left">
+            <h3 className="text-sm mb-1 font-medium text-[#367974]">
+              {record.Title}
+            </h3>
+            <h2 className="text-xl font-bold mb-2 text-[#034641]">
+              {record.Standard}
+            </h2>
+            <p className="text-sm text-[#1c5f5a]">
+              {record.Quicktake}
+            </p>
           </div>
-        )}
+        </div>
       </div>
-    )}
-  </div>
-);
 
-const SearchAndCards: React.FC = () => {
+      {/* Bottom Section - Lighter Color */}
+      {isExpanded && (
+        <div className="p-6 bg-[#e9f2f7]">
+          <p className="prose text-sm mb-6 text-left text-[#1c5f5a]">
+            {record.Details}
+          </p>
+          
+          {/* Buy Button */}
+          {(record.BuyURL || record.Price) && (
+            <div className="flex gap-4 mt-4">
+              {record.BuyURL && (
+                <a
+                  href={record.BuyURL}
+                  className="px-6 py-2.5 rounded-lg transition-all duration-200 border border-[#367974]/20 text-[#034641] hover:bg-[#034641] hover:text-white hover:border-transparent hover:shadow-sm"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {record.Price ? `Buy Now - ${record.Price}` : 'Where to Buy →'}
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SearchAndCards() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<AirtableRecord[]>([]);
@@ -108,25 +87,23 @@ const SearchAndCards: React.FC = () => {
   const [showWelcome, setShowWelcome] = useState(true);
   const searchBarRef = useRef<HTMLDivElement | null>(null);
   const cardsRef = useRef<HTMLDivElement | null>(null);
-  const [logoOffset, setLogoOffset] = useState<number>(250); // Default offset
+  const [logoOffset, setLogoOffset] = useState<number>(250);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const data: AirtableRecord[] = await fetchAirtableData();
+        const data = await fetchAirtableData(); // Remove the explicit type annotation
         setRecommendations(data);
       } catch (error) {
         console.error('Error fetching data from Airtable:', error);
       }
     };
-
     loadData();
   }, []);
 
   useEffect(() => {
     const updateLogoPosition = () => {
       if (!searchBarRef.current || !cardsRef.current) return;
-
       const searchBarBottom = searchBarRef.current.getBoundingClientRect().bottom;
       const cardsBottom = cardsRef.current.getBoundingClientRect().bottom;
       const viewportHeight = window.innerHeight;
@@ -135,7 +112,7 @@ const SearchAndCards: React.FC = () => {
         const mobileOffset = (cardsBottom + viewportHeight) / 2 - 150;
         setLogoOffset(mobileOffset);
       } else {
-        setLogoOffset(searchBarBottom + 250); // Desktop: 250px below the search bar
+        setLogoOffset(searchBarBottom + 250);
       }
     };
 
@@ -146,13 +123,11 @@ const SearchAndCards: React.FC = () => {
 
   const debouncedFilter = debounce((query: string) => {
     if (!query.trim()) {
-      setFilteredRecs([]); // Clear results if query is empty
+      setFilteredRecs([]);
       return;
     }
-  
+
     const processedQuery = query.toLowerCase().trim();
-  
-    // Combine all fields into a single searchable string
     const filtered = recommendations.filter((rec) => {
       const combinedFields = [
         rec.Title,
@@ -162,13 +137,11 @@ const SearchAndCards: React.FC = () => {
         rec.Standard,
         rec.SustainabilityNotes,
       ]
-        .filter(Boolean) // Remove undefined or null fields
-        .join(' ') // Concatenate all fields
-        .toLowerCase(); // Normalize to lowercase
-  
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
       return combinedFields.includes(processedQuery);
     });
-  
     setFilteredRecs(filtered);
   }, 300);
 
@@ -185,8 +158,7 @@ const SearchAndCards: React.FC = () => {
     setSelectedItemId((prev) => (prev === id ? null : id));
   };
 
-  const cardWidth =
-    searchBarRef.current?.getBoundingClientRect().width || '100%';
+  const cardWidth = searchBarRef.current?.getBoundingClientRect().width || '100%';
 
   return (
     <div className="min-h-screen bg-primary text-secondary p-6 main-container pt-[5%] relative">
@@ -197,18 +169,31 @@ const SearchAndCards: React.FC = () => {
           alt="SwellFound Logo"
           className="mx-auto mb-8 h-24"
         />
-
         {/* Search Bar */}
         <div className="relative w-full mb-6" ref={searchBarRef}>
           <input
             type="text"
-            placeholder="Search..."
+            placeholder="Search our Standards..."
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full p-4 pr-12 border border-secondary rounded-lg shadow-sm bg-secondary text-primary"
           />
+          <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#034641"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </div>
         </div>
-
         {/* Animated S Logo */}
         <div
           className={`absolute left-1/2 transform -translate-x-1/2 transition-opacity duration-500 ${
@@ -226,7 +211,6 @@ const SearchAndCards: React.FC = () => {
             />
           </div>
         </div>
-
         {/* Welcome Cards */}
         {showWelcome && (
           <div ref={cardsRef}>
@@ -236,7 +220,6 @@ const SearchAndCards: React.FC = () => {
             />
           </div>
         )}
-
         {/* Results Area */}
         {!showWelcome && (
           <div className="grid grid-cols-1 gap-4" ref={cardsRef}>
@@ -257,6 +240,6 @@ const SearchAndCards: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
 export default SearchAndCards;
