@@ -52,8 +52,8 @@ export default {
           '100%': { opacity: '1' },
         },
         slideDown: {
-          '0%': { transform: 'translateY(0)' },
-          '100%': { transform: 'translateY(100%)' },
+          '0%': { transform: 'translateY(-100%)' },
+          '100%': { transform: 'translateY(0)' },
         },
         bounceIn: {
           '0%': { transform: 'scale(0.8)', opacity: '0' },

@@ -218,7 +218,7 @@ function SearchAndCards() {
         <img
           src="/wordmark.svg"
           alt="SwellFound Logo"
-          className="mx-auto mb-8 h-24"
+          className="mx-auto mb-8 h-12"
         />
 
         {/* Search Container */}
