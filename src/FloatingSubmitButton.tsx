@@ -91,23 +91,29 @@ const FloatingSubmitForm: React.FC = () => {
         SubmitForm_Email: formData.SubmitForm_Email,
       });
   
+      console.log('Form successfully submitted.');
+  
       // Show success state
       setIsSubmitted(true);
       setShowThankYou(true);
   
-      // After 2 seconds, slide down
+      // Reset form state after success
       setTimeout(() => {
         setIsSliding(true);
   
-        // After slide-down animation, close the form
         setTimeout(() => {
           setIsFormOpen(false);
+          setShowThankYou(false); // Fade out thank-you message
   
-          // Fade out thank-you message
-          setTimeout(() => {
-            setShowThankYou(false); // This triggers the fade-out
-          }, 1000); // Matches the duration of the fade-out
-        }, 500);
+          // Reset form for new submission
+          setIsSubmitted(false);
+          setCurrentStep(0);
+          setFormData({
+            SubmitForm_ThreeWords: '',
+            SubmitForm_Name: '',
+            SubmitForm_Email: '',
+          });
+        }, 1500); // Matches slide-down and fade-out animations
       }, 1000);
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -117,19 +123,47 @@ const FloatingSubmitForm: React.FC = () => {
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
+    console.log(`Key pressed: ${event.key}`);
     if (event.key === 'Enter') {
       event.preventDefault();
       if (currentStep < steps.length - 1) {
+        console.log('Advancing to the next step.');
         handleNextStep();
       } else {
+        console.log('Submitting the form.');
         handleSubmit();
       }
     }
   };
-
   const toggleForm = () => {
     if (isSubmitting) return;
-    setIsFormOpen(!isFormOpen);
+  
+    setIsFormOpen((prev) => {
+      const newFormState = !prev;
+  
+      if (newFormState) {
+        console.log('Opening form: resetting state and focusing first input');
+        // Reset the form state
+        setIsSubmitted(false);
+        setCurrentStep(0);
+        setFormData({
+          SubmitForm_ThreeWords: '',
+          SubmitForm_Name: '',
+          SubmitForm_Email: '',
+        });
+  
+        // Focus on the first input field
+        setTimeout(() => {
+          if (inputRefs.current[0]) {
+            inputRefs.current[0]?.focus();
+          } else {
+            console.warn('First input field ref not found.');
+          }
+        }, 0);
+      }
+  
+      return newFormState;
+    });
   };
 
   const submitButton = (
@@ -222,19 +256,22 @@ const FloatingSubmitForm: React.FC = () => {
                     className={`${currentStep === index ? 'block' : 'hidden'} 
                       transition-all duration-500 ease-in-out`}
                   >
-                    <div className="mb-6 relative">
-                      <input
-                        ref={(el) => (inputRefs.current[index] = el)}
-                        type={step.type}
-                        id={step.id}
-                        value={formData[step.id as keyof typeof formData]}
-                        onChange={handleInputChange}
-                        onKeyDown={handleKeyDown}
-                        className="w-full border-none border-b-2 border-[#034641] bg-transparent focus:outline-none focus:border-[#A7D6CB] focus:ring-0 placeholder-[#a0a0a0]"
-                        placeholder={step.placeholder}
-                        disabled={isSubmitting}
-                      />
-                    </div>
+                    <div className="relative">
+  <input
+    ref={(el) => (inputRefs.current[index] = el)}
+    type={step.type}
+    id={step.id}
+    value={formData[step.id as keyof typeof formData]}
+    onChange={handleInputChange}
+    onKeyDown={handleKeyDown}
+    className="w-full border-none border-b-2 border-[#034641] bg-transparent focus:outline-none focus:border-[#A7D6CB] focus:ring-0 placeholder-[#a0a0a0] pr-10"
+    placeholder={step.placeholder}
+    disabled={isSubmitting}
+  />
+  <span className="absolute top-1/2 right-2 transform -translate-y-1/2 text-[#034641]">
+    ↵
+  </span>
+</div>
                   </div>
                 ))}
               </div>
