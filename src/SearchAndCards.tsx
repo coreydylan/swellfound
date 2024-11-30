@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { debounce } from 'lodash';
 import WelcomeCards from './WelcomeCards';
 import { fetchAirtableData, AirtableRecord } from './airtable';
+import Cookies from 'js-cookie';
 
 function StandardCard({ record, isExpanded, onToggle }: {
   record: AirtableRecord;
@@ -100,9 +101,18 @@ function SearchAndCards() {
   const cardsRef = useRef<HTMLDivElement | null>(null);
   const [logoOffset, setLogoOffset] = useState<number>(250);
 
+  const WELCOME_COOKIE_NAME = 'hideWelcomeCards';
+
   const uniqueTypes = [
     ...new Set(recommendations.map((rec) => rec.Type_Text).flat()),
   ];
+
+  useEffect(() => {
+    const hideWelcomeCards = Cookies.get(WELCOME_COOKIE_NAME);
+    if (hideWelcomeCards === 'true') {
+      setShowWelcome(false);
+    }
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -135,6 +145,13 @@ function SearchAndCards() {
     window.addEventListener('resize', updateLogoPosition);
     return () => window.removeEventListener('resize', updateLogoPosition);
   }, []);
+
+  const handleWelcomeComplete = (dontShowAgain: boolean) => {
+    setShowWelcome(false);
+    if (dontShowAgain) {
+      Cookies.set(WELCOME_COOKIE_NAME, 'true', { expires: 365 });
+    }
+  };
 
   const debouncedFilter = debounce((query: string) => {
     let filtered = recommendations;
@@ -326,7 +343,7 @@ function SearchAndCards() {
         {showWelcome && (
           <div ref={cardsRef}>
             <WelcomeCards
-              onComplete={() => setShowWelcome(false)}
+              onComplete={handleWelcomeComplete}
               cardWidth={`${cardWidth}px`}
             />
           </div>
