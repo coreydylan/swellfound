@@ -183,7 +183,7 @@ const FloatingSubmitForm: React.FC = () => {
     pointerEvents: 'none', // Ensure it doesn't block clicks
   }}
 >
-  Your Standard has been submitted
+  your Standard has been submitted
 </div>
 
       {/* Form Modal */}

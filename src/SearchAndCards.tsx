@@ -9,34 +9,42 @@ function StandardCard({ record, isExpanded, onToggle }: {
   isExpanded: boolean;
   onToggle: () => void;
 }) {
+  const [selectedRelated, setSelectedRelated] = useState<string | null>(null);
+
+  const handleRelatedClick = (relatedId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedRelated(prev => prev === relatedId ? null : relatedId);
+  };
+
+  const isCollection = record.Type_Text?.some(type => 
+    type.toLowerCase() === 'collection'
+  );
+
   return (
     <div
-      className={`relative overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-200 rounded-lg`}
+      className={`
+        relative overflow-hidden cursor-pointer hover:shadow-lg 
+        transition-all duration-200 rounded-lg
+        ${isCollection ? 'ring-2 ring-[#367974]' : ''}
+      `}
       onClick={onToggle}
     >
+      {/* Main Card Content */}
       <div className="p-6 bg-[#e0eff9]">
-        {/* Type Tag Container */}
         <div className="flex md:block">
           {record.Type_Text && record.Type_Text.length > 0 && (
             <div
-              className="
-                text-xs font-semibold uppercase
-                md:absolute md:top-3 md:right-3
-                mb-4
-                md:mb-0
-                border border-[#034641] px-2 py-1 rounded-md
-                inline-block
-              "
-              style={{
-                color: '#034641',
-              }}
+              className={`
+                text-xs font-semibold uppercase md:absolute md:top-3 md:right-3 
+                mb-4 md:mb-0 border border-[#034641] px-2 py-1 rounded-md inline-block
+                ${isCollection ? 'bg-[#034641] text-white' : 'text-[#034641]'}
+              `}
             >
               {record.Type_Text[0]}
             </div>
           )}
         </div>
 
-        {/* Content Container */}
         <div className="flex gap-6">
           {record.ImageURL && (
             <div className="flex-shrink-0 w-32 h-32">
@@ -61,26 +69,140 @@ function StandardCard({ record, isExpanded, onToggle }: {
         </div>
       </div>
 
-      {/* Bottom Section - Lighter Color */}
+      {/* Expanded Content */}
       {isExpanded && (
-        <div className="p-6 bg-[#e9f2f7]">
-          <p className="prose text-sm mb-6 text-left text-[#1c5f5a]">
-            {record.Details}
-          </p>
+        <div className="bg-[#e9f2f7]">
+          {/* Details Section - Only render if there are details */}
+          {record.Details && (
+            <div className="p-6">
+              <p className="prose text-sm text-left text-[#1c5f5a]">
+                {record.Details}
+              </p>
+            </div>
+          )}
 
-          {/* Buy Button */}
-          {(record.BuyURL || record.Price) && (
-            <div className="flex gap-4 mt-4">
-              {record.BuyURL && (
+          {/* Buy Button - Only for non-collection cards */}
+          {!isCollection && record.BuyURL && (
+            <div className="px-6 pb-6">
+              <div className="flex justify-start">
                 <a
                   href={record.BuyURL}
                   className="px-6 py-2.5 rounded-lg transition-all duration-200 border border-[#367974]/20 text-[#034641] hover:bg-[#034641] hover:text-white hover:border-transparent hover:shadow-sm"
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   {record.Price ? `Buy Now - ${record.Price}` : 'Where to Buy →'}
                 </a>
+              </div>
+            </div>
+          )}
+
+          {/* Related Standards Section */}
+          {record.relatedStandardsData && record.relatedStandardsData.length > 0 && (
+            <div className={`${!record.Details ? 'pt-6' : ''}`}>
+              {!isCollection && (
+                <h4 className="px-6 text-sm font-medium text-[#367974] mb-4 text-left">
+                  Related Standards
+                </h4>
               )}
+              <div className="space-y-2 px-6">
+                {record.relatedStandardsData.map((related) => (
+                  <div key={related.id} className="rounded-lg overflow-hidden">
+                    {/* Preview Row */}
+                    <div 
+                      className={`
+                        p-4 cursor-pointer transition-all duration-200
+                        ${selectedRelated === related.id 
+                          ? 'bg-[#034641] text-white' 
+                          : 'bg-[#e0eff9] hover:bg-[#d3e7f5]'
+                        }
+                      `}
+                      onClick={(e) => handleRelatedClick(related.id, e)}
+                    >
+                      <div className="flex items-start gap-4">
+                        {/* Show image in preview for collection cards */}
+                        {isCollection && related.ImageURL && (
+                          <div className="flex-shrink-0 w-24 h-24">
+                            <img
+                              src={related.ImageURL}
+                              alt={related.Title}
+                              className="w-full h-full object-cover rounded-lg"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-grow text-left">
+                          {related.Type_Text && related.Type_Text.length > 0 && (
+                            <div 
+                              className={`
+                                text-[10px] font-semibold uppercase 
+                                px-1.5 py-0.5 rounded-md inline-block mb-2
+                                border
+                                ${selectedRelated === related.id 
+                                  ? 'border-white text-white' 
+                                  : 'border-[#034641] text-[#034641]'
+                                }
+                              `}
+                            >
+                              {related.Type_Text[0]}
+                            </div>
+                          )}
+                          <h3 className={`font-bold mb-2 ${
+                            selectedRelated === related.id ? 'text-white' : 'text-[#034641]'
+                          }`}>
+                            {related.Standard}
+                          </h3>
+                          <p className={`text-sm ${
+                            selectedRelated === related.id ? 'text-white/80' : 'text-[#1c5f5a]'
+                          }`}>
+                            {related.Quicktake}
+                          </p>
+                        </div>
+                        <div className={`flex-shrink-0 mt-1 ${
+                          selectedRelated === related.id ? 'rotate-180' : ''
+                        } transition-transform duration-200`}>
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Expanded Full Card View */}
+                    {selectedRelated === related.id && (
+                      <div className="bg-[#e9f2f7] p-4 text-left">
+                        <h3 className="text-sm mb-1 font-medium text-[#367974]">
+                          {related.Title}
+                        </h3>
+                        <p className="text-sm text-[#1c5f5a] mb-4">
+                          {related.Details}
+                        </p>
+                        {related.BuyURL && (
+                          <a
+                            href={related.BuyURL}
+                            className="px-4 py-2 text-sm rounded-lg transition-all duration-200 border border-[#367974]/20 text-[#034641] hover:bg-[#034641] hover:text-white hover:border-transparent hover:shadow-sm"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {related.Price ? `Buy Now - ${related.Price}` : 'Where to Buy →'}
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -88,6 +210,10 @@ function StandardCard({ record, isExpanded, onToggle }: {
     </div>
   );
 }
+
+
+
+
 
 function SearchAndCards() {
   const [searchQuery, setSearchQuery] = useState('');
